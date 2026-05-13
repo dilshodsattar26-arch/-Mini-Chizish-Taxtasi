@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Chizish Taxtasi</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif;
+            height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        h2 { margin-bottom: 12px; letter-spacing: 1px; }
+        canvas {
+            background: #ffffff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            cursor: crosshair; touch-action: none; max-width: 90vw;
+        }
+        .toolbar {
+            margin-top: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;
+        }
+        input[type="color"] { width: 40px; height: 38px; border: none; cursor: pointer; border-radius: 8px; }
+        input[type="range"] { width: 90px; cursor: pointer; }
+        button {
+            padding: 8px 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .btn-clear { background: #ef4444; color: white; }
+        .btn-save { background: #3b82f6; color: white; }
+        button:hover { opacity: 0.85; transform: scale(1.03); }
+        #status { font-size: 12px; color: #64748b; margin-top: 8px; min-height: 18px; }
+    </style>
+</head>
+<body>
+
+    <h2>🖌️ Mini Chizish Taxtasi</h2>
+    <canvas id="board" width="400" height="280"></canvas>
+    
+    <div class="toolbar">
+        <input type="color" id="colorPick" value="#2563eb" title="Rang tanlash">
+        <label>📏 <input type="range" id="brushSize" min="2" max="25" value="5"></label>
+        <button class="btn-clear" onclick="clearBoard()">🗑 Tozalash</button>
+        <button class="btn-save" onclick="saveDrawing()">💾 Saqlash</button>
+    </div>
+    <p id="status">Chizish uchun bosing va suring</p>
+
+<script>
+    const cvs = document.getElementById('board');
+    const ctx = cvs.getContext('2d');
+    let drawing = false;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+    function getPos(e) {
+        const r = cvs.getBoundingClientRect();
+        const x = e.touches ? e.touches[0].clientX - r.left : e.clientX - r.left;
+        const y = e.touches ? e.touches[0].clientY - r.top : e.clientY - r.top;
+        return { x, y };
+    }
+
+    function start(e) { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+    function draw(e) {
+        if (!drawing) return;
+        if (e.type === 'touchmove') e.preventDefault();
+        ctx.lineWidth = document.getElementById('brushSize').value;
+        ctx.strokeStyle = document.getElementById('colorPick').value;
+        const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke();
+    }
+    function end() { drawing = false; }
+
+    // Desktop + Touch hodisalari
+    cvs.addEventListener('mousedown', start); cvs.addEventListener('mousemove', draw);
+    cvs.addEventListener('mouseup', end); cvs.addEventListener('mouseleave', end);
+    cvs.addEventListener('touchstart', start, {passive:false}); cvs.addEventListener('touchmove', draw, {passive:false});
+    cvs.addEventListener('touchend', end);
+
+    function clearBoard() { ctx.clearRect(0,0,cvs.width,cvs.height); setStatus("Taxta tozalandi ✅"); }
+    function saveDrawing() {
+        const link = document.createElement('a');
+        link.download = `chizma_${Date.now()}.png`;
+        link.href = cvs.toDataURL('image/png'); link.click();
+        setStatus("Rasm yuklab olindi 📥");
+    }
+    function setStatus(msg) { document.getElementById('status').textContent = msg; }
+</script>
+
+</body>
+</html>
